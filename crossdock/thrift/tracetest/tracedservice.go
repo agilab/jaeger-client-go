@@ -6,6 +6,7 @@ package tracetest
 import (
 	"bytes"
 	"fmt"
+
 	"github.com/apache/thrift/lib/go/thrift"
 )
 
@@ -229,13 +230,13 @@ func NewTracedServiceProcessor(handler TracedService) *TracedServiceProcessor {
 	return self4
 }
 
-func (p *TracedServiceProcessor) Process(iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
+func (p *TracedServiceProcessor) Process(ctx context.Context, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
 	name, _, seqId, err := iprot.ReadMessageBegin()
 	if err != nil {
 		return false, err
 	}
 	if processor, ok := p.GetProcessorFunction(name); ok {
-		return processor.Process(seqId, iprot, oprot)
+		return processor.Process(ctx, seqId, iprot, oprot)
 	}
 	iprot.Skip(thrift.STRUCT)
 	iprot.ReadMessageEnd()
@@ -252,7 +253,7 @@ type tracedServiceProcessorStartTrace struct {
 	handler TracedService
 }
 
-func (p *tracedServiceProcessorStartTrace) Process(seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
+func (p *tracedServiceProcessorStartTrace) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
 	args := TracedServiceStartTraceArgs{}
 	if err = args.Read(iprot); err != nil {
 		iprot.ReadMessageEnd()
@@ -300,7 +301,7 @@ type tracedServiceProcessorJoinTrace struct {
 	handler TracedService
 }
 
-func (p *tracedServiceProcessorJoinTrace) Process(seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
+func (p *tracedServiceProcessorJoinTrace) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
 	args := TracedServiceJoinTraceArgs{}
 	if err = args.Read(iprot); err != nil {
 		iprot.ReadMessageEnd()
