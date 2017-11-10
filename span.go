@@ -173,6 +173,18 @@ func (s *Span) BaggageItem(key string) string {
 	return s.context.baggage[key]
 }
 
+func (s *Span) Tags() []Tag {
+	s.RLock()
+	defer s.RUnlock()
+	return s.tags
+}
+
+func (s *Span) LogRecords() []opentracing.LogRecord {
+	s.RLock()
+	defer s.RUnlock()
+	return s.logs
+}
+
 // Finish implements opentracing.Span API
 func (s *Span) Finish() {
 	s.FinishWithOptions(opentracing.FinishOptions{})
