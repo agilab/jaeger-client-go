@@ -99,15 +99,13 @@ func (p *SamplingManagerClient) recvGetSamplingStrategy() (value *SamplingStrate
 	}
 	if mTypeId == thrift.EXCEPTION {
 		error1 := thrift.NewTApplicationException(thrift.UNKNOWN_APPLICATION_EXCEPTION, "Unknown Exception")
-		var error2 error
-		error2, err = error1.Read(iprot)
+		err = error1.Read(iprot)
 		if err != nil {
 			return
 		}
 		if err = iprot.ReadMessageEnd(); err != nil {
 			return
 		}
-		err = error2
 		return
 	}
 	if mTypeId != thrift.REPLY {

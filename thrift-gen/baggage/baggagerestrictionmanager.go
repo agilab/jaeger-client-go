@@ -107,15 +107,13 @@ func (p *BaggageRestrictionManagerClient) recvGetBaggageRestrictions() (value []
 	}
 	if mTypeId == thrift.EXCEPTION {
 		error0 := thrift.NewTApplicationException(thrift.UNKNOWN_APPLICATION_EXCEPTION, "Unknown Exception")
-		var error1 error
-		error1, err = error0.Read(iprot)
+		err = error0.Read(iprot)
 		if err != nil {
 			return
 		}
 		if err = iprot.ReadMessageEnd(); err != nil {
 			return
 		}
-		err = error1
 		return
 	}
 	if mTypeId != thrift.REPLY {
