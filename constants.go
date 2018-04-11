@@ -16,7 +16,7 @@ package jaeger
 
 const (
 	// JaegerClientVersion is the version of the client library reported as Span tag.
-	JaegerClientVersion = "Go-2.9.1dev"
+	JaegerClientVersion = "Go-2.12.0"
 
 	// JaegerClientVersionTagKey is the name of the tag used to report client version.
 	JaegerClientVersionTagKey = "jaeger.version"
@@ -71,6 +71,12 @@ const (
 	SamplerTypeRateLimiting = "ratelimiting"
 
 	// SamplerTypeLowerBound is the type of sampler that samples
-	// only up to a fixed number of traces per second.
+	// at least a fixed number of traces per second.
 	SamplerTypeLowerBound = "lowerbound"
+
+	// DefaultUDPSpanServerHost is the default host to send the spans to, via UDP
+	DefaultUDPSpanServerHost = "localhost"
+
+	// DefaultUDPSpanServerPort is the default port to send the spans to, via UDP
+	DefaultUDPSpanServerPort = 6831
 )

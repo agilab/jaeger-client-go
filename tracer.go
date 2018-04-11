@@ -26,6 +26,7 @@ import (
 	"github.com/opentracing/opentracing-go/ext"
 
 	"github.com/uber/jaeger-client-go/internal/baggage"
+	"github.com/uber/jaeger-client-go/internal/throttler"
 	"github.com/uber/jaeger-client-go/log"
 	"github.com/uber/jaeger-client-go/utils"
 )
@@ -44,9 +45,10 @@ type Tracer struct {
 	randomNumber func() uint64
 
 	options struct {
-		poolSpans           bool
-		gen128Bit           bool // whether to generate 128bit trace IDs
-		zipkinSharedRPCSpan bool
+		poolSpans            bool
+		gen128Bit            bool // whether to generate 128bit trace IDs
+		zipkinSharedRPCSpan  bool
+		highTraceIDGenerator func() uint64 // custom high trace ID generator
 		// more options to come
 	}
 	// pool for Span objects
@@ -57,10 +59,13 @@ type Tracer struct {
 
 	observer compositeObserver
 
-	tags []Tag
+	tags    []Tag
+	process Process
 
 	baggageRestrictionManager baggage.RestrictionManager
 	baggageSetter             *baggageSetter
+
+	debugThrottler throttler.Throttler
 }
 
 // NewTracer creates Tracer implementation that reports tracing to Jaeger.
@@ -110,6 +115,9 @@ func NewTracer(
 	} else {
 		t.baggageSetter = newBaggageSetter(baggage.NewDefaultRestrictionManager(0), &t.metrics)
 	}
+	if t.debugThrottler == nil {
+		t.debugThrottler = throttler.DefaultThrottler{}
+	}
 	if t.randomNumber == nil {
 		rng := utils.NewRand(time.Now().UnixNano())
 		t.randomNumber = func() uint64 {
@@ -132,6 +140,23 @@ func NewTracer(
 		t.hostIPv4 = utils.PackIPAsUint32(ip)
 	} else {
 		t.logger.Error("Unable to determine this host's IP address: " + err.Error())
+	}
+
+	if t.options.gen128Bit {
+		if t.options.highTraceIDGenerator == nil {
+			t.options.highTraceIDGenerator = t.randomNumber
+		}
+	} else if t.options.highTraceIDGenerator != nil {
+		t.logger.Error("Overriding high trace ID generator but not generating " +
+			"128 bit trace IDs, consider enabling the \"Gen128Bit\" option")
+	}
+	t.process = Process{
+		UUID:    "PLACEHOLDER", // TODO
+		Service: serviceName,
+		Tags:    t.tags,
+	}
+	if throttler, ok := t.debugThrottler.(ProcessSetter); ok {
+		throttler.SetProcess(t.process)
 	}
 
 	return t, t
@@ -205,7 +230,7 @@ func (t *Tracer) startSpanWithOptions(
 		newTrace = true
 		ctx.traceID.Low = t.randomID()
 		if t.options.gen128Bit {
-			ctx.traceID.High = t.randomID()
+			ctx.traceID.High = t.options.highTraceIDGenerator()
 		}
 		ctx.spanID = SpanID(ctx.traceID.Low)
 		ctx.parentID = 0
@@ -284,6 +309,9 @@ func (t *Tracer) Close() error {
 	if mgr, ok := t.baggageRestrictionManager.(io.Closer); ok {
 		mgr.Close()
 	}
+	if throttler, ok := t.debugThrottler.(io.Closer); ok {
+		throttler.Close()
+	}
 	return nil
 }
 
@@ -338,9 +366,8 @@ func (t *Tracer) startSpanInternal(
 		}
 	}
 	// emit metrics
-	t.metrics.SpansStarted.Inc(1)
 	if sp.context.IsSampled() {
-		t.metrics.SpansSampled.Inc(1)
+		t.metrics.SpansStartedSampled.Inc(1)
 		if newTrace {
 			// We cannot simply check for parentID==0 because in Zipkin model the
 			// server-side RPC span has the exact same trace/span/parent IDs as the
@@ -351,7 +378,7 @@ func (t *Tracer) startSpanInternal(
 			t.metrics.TracesJoinedSampled.Inc(1)
 		}
 	} else {
-		t.metrics.SpansNotSampled.Inc(1)
+		t.metrics.SpansStartedNotSampled.Inc(1)
 		if newTrace {
 			t.metrics.TracesStartedNotSampled.Inc(1)
 		} else if sp.firstInProcess {
@@ -381,7 +408,7 @@ func (t *Tracer) randomID() uint64 {
 	return val
 }
 
-// (NB) span should hold the lock before making this call
+// (NB) span must hold the lock before making this call
 func (t *Tracer) setBaggage(sp *Span, key, value string) {
 	t.baggageSetter.setBaggage(sp, key, value)
 }
