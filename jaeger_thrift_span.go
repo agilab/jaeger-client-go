@@ -30,17 +30,19 @@ func BuildJaegerThrift(span *Span) *j.Span {
 	startTime := utils.TimeToMicrosecondsSinceEpochInt64(span.startTime)
 	duration := span.duration.Nanoseconds() / int64(time.Microsecond)
 	jaegerSpan := &j.Span{
-		TraceIdLow:    int64(span.context.traceID.Low),
-		TraceIdHigh:   int64(span.context.traceID.High),
-		SpanId:        int64(span.context.spanID),
-		ParentSpanId:  int64(span.context.parentID),
-		OperationName: span.operationName,
-		Flags:         int32(span.context.flags),
-		StartTime:     startTime,
-		Duration:      duration,
-		Tags:          buildTags(span.tags, span.tracer.options.maxTagValueLength),
-		Logs:          buildLogs(span.logs),
-		References:    buildReferences(span.references),
+		TraceIdLow:          int64(span.context.traceID.Low),
+		TraceIdHigh:         int64(span.context.traceID.High),
+		SpanId:              int64(span.context.spanID),
+		ParentSpanId:        int64(span.context.parentID),
+		OperationName:       span.operationName,
+		Flags:               int32(span.context.flags),
+		StartTime:           startTime,
+		Duration:            duration,
+		Tags:                buildTags(span.tags, span.tracer.options.maxTagValueLength),
+		Logs:                buildLogs(span.logs),
+		References:          buildReferences(span.references),
+		ParentSpanIds:       span.context.ParentSpanIds,
+		ParentOperatorNames: span.context.ParentOperatorNames,
 	}
 	return jaegerSpan
 }

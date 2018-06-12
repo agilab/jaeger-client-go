@@ -246,6 +246,8 @@ func (t *Tracer) startSpanWithOptions(
 		}
 		ctx.spanID = SpanID(ctx.traceID.Low)
 		ctx.parentID = 0
+		ctx.ParentSpanIds = []int64{int64(ctx.spanID)}
+		ctx.ParentOperatorNames = []string{operationName}
 		ctx.flags = byte(0)
 		if hasParent && parent.isDebugIDContainerOnly() && t.isDebugAllowed(operationName) {
 			ctx.flags |= (flagSampled | flagDebug)
@@ -264,6 +266,8 @@ func (t *Tracer) startSpanWithOptions(
 			ctx.spanID = SpanID(t.randomID())
 			ctx.parentID = parent.spanID
 		}
+		ctx.ParentSpanIds = append([]int64{int64(ctx.spanID)}, parent.ParentSpanIds...)
+		ctx.ParentOperatorNames = append([]string{operationName}, parent.ParentOperatorNames...)
 		ctx.flags = parent.flags
 	}
 	if hasParent {

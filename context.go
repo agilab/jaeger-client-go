@@ -66,6 +66,12 @@ type SpanContext struct {
 	//
 	// See JaegerDebugHeader in constants.go
 	debugID string
+
+	// parentID refers to the ID of the parent span.
+	ParentSpanIds []int64
+
+	// parent span operator name
+	ParentOperatorNames []string
 }
 
 // ForeachBaggageItem implements ForeachBaggageItem() of opentracing.SpanContext
@@ -187,7 +193,8 @@ func (c SpanContext) WithBaggageItem(key, value string) SpanContext {
 		newBaggage[key] = value
 	}
 	// Use positional parameters so the compiler will help catch new fields.
-	return SpanContext{c.traceID, c.spanID, c.parentID, c.flags, newBaggage, ""}
+	return SpanContext{c.traceID, c.spanID, c.parentID,
+		c.flags, newBaggage, "", c.ParentSpanIds, c.ParentOperatorNames}
 }
 
 // isDebugIDContainerOnly returns true when the instance of the context is only
