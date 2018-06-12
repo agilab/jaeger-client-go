@@ -5,10 +5,8 @@ package zipkincore
 
 import (
 	"bytes"
-	"context"
 	"fmt"
-
-	"github.com/apache/thrift/lib/go/thrift"
+	"github.com/uber/jaeger-client-go/thrift"
 )
 
 // (needed to ensure safety because of naive import list construction.)
@@ -99,13 +97,15 @@ func (p *ZipkinCollectorClient) recvSubmitZipkinBatch() (value []*Response, err 
 	}
 	if mTypeId == thrift.EXCEPTION {
 		error2 := thrift.NewTApplicationException(thrift.UNKNOWN_APPLICATION_EXCEPTION, "Unknown Exception")
-		err = error2.Read(iprot)
+		var error3 error
+		error3, err = error2.Read(iprot)
 		if err != nil {
 			return
 		}
 		if err = iprot.ReadMessageEnd(); err != nil {
 			return
 		}
+		err = error3
 		return
 	}
 	if mTypeId != thrift.REPLY {
@@ -148,13 +148,13 @@ func NewZipkinCollectorProcessor(handler ZipkinCollector) *ZipkinCollectorProces
 	return self4
 }
 
-func (p *ZipkinCollectorProcessor) Process(ctx context.Context, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
+func (p *ZipkinCollectorProcessor) Process(iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
 	name, _, seqId, err := iprot.ReadMessageBegin()
 	if err != nil {
 		return false, err
 	}
 	if processor, ok := p.GetProcessorFunction(name); ok {
-		return processor.Process(ctx, seqId, iprot, oprot)
+		return processor.Process(seqId, iprot, oprot)
 	}
 	iprot.Skip(thrift.STRUCT)
 	iprot.ReadMessageEnd()
@@ -171,7 +171,7 @@ type zipkinCollectorProcessorSubmitZipkinBatch struct {
 	handler ZipkinCollector
 }
 
-func (p *zipkinCollectorProcessorSubmitZipkinBatch) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
+func (p *zipkinCollectorProcessorSubmitZipkinBatch) Process(seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
 	args := ZipkinCollectorSubmitZipkinBatchArgs{}
 	if err = args.Read(iprot); err != nil {
 		iprot.ReadMessageEnd()

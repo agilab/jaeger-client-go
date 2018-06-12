@@ -5,10 +5,8 @@ package baggage
 
 import (
 	"bytes"
-	"context"
 	"fmt"
-
-	"github.com/apache/thrift/lib/go/thrift"
+	"github.com/uber/jaeger-client-go/thrift"
 )
 
 // (needed to ensure safety because of naive import list construction.)
@@ -107,13 +105,15 @@ func (p *BaggageRestrictionManagerClient) recvGetBaggageRestrictions() (value []
 	}
 	if mTypeId == thrift.EXCEPTION {
 		error0 := thrift.NewTApplicationException(thrift.UNKNOWN_APPLICATION_EXCEPTION, "Unknown Exception")
-		err = error0.Read(iprot)
+		var error1 error
+		error1, err = error0.Read(iprot)
 		if err != nil {
 			return
 		}
 		if err = iprot.ReadMessageEnd(); err != nil {
 			return
 		}
+		err = error1
 		return
 	}
 	if mTypeId != thrift.REPLY {
@@ -156,13 +156,13 @@ func NewBaggageRestrictionManagerProcessor(handler BaggageRestrictionManager) *B
 	return self2
 }
 
-func (p *BaggageRestrictionManagerProcessor) Process(ctx context.Context, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
+func (p *BaggageRestrictionManagerProcessor) Process(iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
 	name, _, seqId, err := iprot.ReadMessageBegin()
 	if err != nil {
 		return false, err
 	}
 	if processor, ok := p.GetProcessorFunction(name); ok {
-		return processor.Process(ctx, seqId, iprot, oprot)
+		return processor.Process(seqId, iprot, oprot)
 	}
 	iprot.Skip(thrift.STRUCT)
 	iprot.ReadMessageEnd()
@@ -179,7 +179,7 @@ type baggageRestrictionManagerProcessorGetBaggageRestrictions struct {
 	handler BaggageRestrictionManager
 }
 
-func (p *baggageRestrictionManagerProcessorGetBaggageRestrictions) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
+func (p *baggageRestrictionManagerProcessorGetBaggageRestrictions) Process(seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
 	args := BaggageRestrictionManagerGetBaggageRestrictionsArgs{}
 	if err = args.Read(iprot); err != nil {
 		iprot.ReadMessageEnd()
