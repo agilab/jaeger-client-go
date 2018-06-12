@@ -866,18 +866,22 @@ func (p *SpanRef) String() string {
 //  - Duration
 //  - Tags
 //  - Logs
+//  - ParentSpanIds
+//  - ParentOperatorNames
 type Span struct {
-	TraceIdLow    int64      `thrift:"traceIdLow,1,required" json:"traceIdLow"`
-	TraceIdHigh   int64      `thrift:"traceIdHigh,2,required" json:"traceIdHigh"`
-	SpanId        int64      `thrift:"spanId,3,required" json:"spanId"`
-	ParentSpanId  int64      `thrift:"parentSpanId,4,required" json:"parentSpanId"`
-	OperationName string     `thrift:"operationName,5,required" json:"operationName"`
-	References    []*SpanRef `thrift:"references,6" json:"references,omitempty"`
-	Flags         int32      `thrift:"flags,7,required" json:"flags"`
-	StartTime     int64      `thrift:"startTime,8,required" json:"startTime"`
-	Duration      int64      `thrift:"duration,9,required" json:"duration"`
-	Tags          []*Tag     `thrift:"tags,10" json:"tags,omitempty"`
-	Logs          []*Log     `thrift:"logs,11" json:"logs,omitempty"`
+	TraceIdLow          int64      `thrift:"traceIdLow,1,required" json:"traceIdLow"`
+	TraceIdHigh         int64      `thrift:"traceIdHigh,2,required" json:"traceIdHigh"`
+	SpanId              int64      `thrift:"spanId,3,required" json:"spanId"`
+	ParentSpanId        int64      `thrift:"parentSpanId,4,required" json:"parentSpanId"`
+	OperationName       string     `thrift:"operationName,5,required" json:"operationName"`
+	References          []*SpanRef `thrift:"references,6" json:"references,omitempty"`
+	Flags               int32      `thrift:"flags,7,required" json:"flags"`
+	StartTime           int64      `thrift:"startTime,8,required" json:"startTime"`
+	Duration            int64      `thrift:"duration,9,required" json:"duration"`
+	Tags                []*Tag     `thrift:"tags,10" json:"tags,omitempty"`
+	Logs                []*Log     `thrift:"logs,11" json:"logs,omitempty"`
+	ParentSpanIds       []int64    `thrift:"ParentSpanIds,12" json:"ParentSpanIds,omitempty"`
+	ParentOperatorNames []string   `thrift:"ParentOperatorNames,13" json:"ParentOperatorNames,omitempty"`
 }
 
 func NewSpan() *Span {
@@ -933,6 +937,18 @@ var Span_Logs_DEFAULT []*Log
 func (p *Span) GetLogs() []*Log {
 	return p.Logs
 }
+
+var Span_ParentSpanIds_DEFAULT []int64
+
+func (p *Span) GetParentSpanIds() []int64 {
+	return p.ParentSpanIds
+}
+
+var Span_ParentOperatorNames_DEFAULT []string
+
+func (p *Span) GetParentOperatorNames() []string {
+	return p.ParentOperatorNames
+}
 func (p *Span) IsSetReferences() bool {
 	return p.References != nil
 }
@@ -943,6 +959,14 @@ func (p *Span) IsSetTags() bool {
 
 func (p *Span) IsSetLogs() bool {
 	return p.Logs != nil
+}
+
+func (p *Span) IsSetParentSpanIds() bool {
+	return p.ParentSpanIds != nil
+}
+
+func (p *Span) IsSetParentOperatorNames() bool {
+	return p.ParentOperatorNames != nil
 }
 
 func (p *Span) Read(iprot thrift.TProtocol) error {
@@ -1018,6 +1042,14 @@ func (p *Span) Read(iprot thrift.TProtocol) error {
 			}
 		case 11:
 			if err := p.readField11(iprot); err != nil {
+				return err
+			}
+		case 12:
+			if err := p.readField12(iprot); err != nil {
+				return err
+			}
+		case 13:
+			if err := p.readField13(iprot); err != nil {
 				return err
 			}
 		default:
@@ -1191,6 +1223,50 @@ func (p *Span) readField11(iprot thrift.TProtocol) error {
 	return nil
 }
 
+func (p *Span) readField12(iprot thrift.TProtocol) error {
+	_, size, err := iprot.ReadListBegin()
+	if err != nil {
+		return thrift.PrependError("error reading list begin: ", err)
+	}
+	tSlice := make([]int64, 0, size)
+	p.ParentSpanIds = tSlice
+	for i := 0; i < size; i++ {
+		var _elem4 int64
+		if v, err := iprot.ReadI64(); err != nil {
+			return thrift.PrependError("error reading field 0: ", err)
+		} else {
+			_elem4 = v
+		}
+		p.ParentSpanIds = append(p.ParentSpanIds, _elem4)
+	}
+	if err := iprot.ReadListEnd(); err != nil {
+		return thrift.PrependError("error reading list end: ", err)
+	}
+	return nil
+}
+
+func (p *Span) readField13(iprot thrift.TProtocol) error {
+	_, size, err := iprot.ReadListBegin()
+	if err != nil {
+		return thrift.PrependError("error reading list begin: ", err)
+	}
+	tSlice := make([]string, 0, size)
+	p.ParentOperatorNames = tSlice
+	for i := 0; i < size; i++ {
+		var _elem5 string
+		if v, err := iprot.ReadString(); err != nil {
+			return thrift.PrependError("error reading field 0: ", err)
+		} else {
+			_elem5 = v
+		}
+		p.ParentOperatorNames = append(p.ParentOperatorNames, _elem5)
+	}
+	if err := iprot.ReadListEnd(); err != nil {
+		return thrift.PrependError("error reading list end: ", err)
+	}
+	return nil
+}
+
 func (p *Span) Write(oprot thrift.TProtocol) error {
 	if err := oprot.WriteStructBegin("Span"); err != nil {
 		return thrift.PrependError(fmt.Sprintf("%T write struct begin error: ", p), err)
@@ -1226,6 +1302,12 @@ func (p *Span) Write(oprot thrift.TProtocol) error {
 		return err
 	}
 	if err := p.writeField11(oprot); err != nil {
+		return err
+	}
+	if err := p.writeField12(oprot); err != nil {
+		return err
+	}
+	if err := p.writeField13(oprot); err != nil {
 		return err
 	}
 	if err := oprot.WriteFieldStop(); err != nil {
@@ -1410,6 +1492,52 @@ func (p *Span) writeField11(oprot thrift.TProtocol) (err error) {
 	return err
 }
 
+func (p *Span) writeField12(oprot thrift.TProtocol) (err error) {
+	if p.IsSetParentSpanIds() {
+		if err := oprot.WriteFieldBegin("ParentSpanIds", thrift.LIST, 12); err != nil {
+			return thrift.PrependError(fmt.Sprintf("%T write field begin error 12:ParentSpanIds: ", p), err)
+		}
+		if err := oprot.WriteListBegin(thrift.I64, len(p.ParentSpanIds)); err != nil {
+			return thrift.PrependError("error writing list begin: ", err)
+		}
+		for _, v := range p.ParentSpanIds {
+			if err := oprot.WriteI64(int64(v)); err != nil {
+				return thrift.PrependError(fmt.Sprintf("%T. (0) field write error: ", p), err)
+			}
+		}
+		if err := oprot.WriteListEnd(); err != nil {
+			return thrift.PrependError("error writing list end: ", err)
+		}
+		if err := oprot.WriteFieldEnd(); err != nil {
+			return thrift.PrependError(fmt.Sprintf("%T write field end error 12:ParentSpanIds: ", p), err)
+		}
+	}
+	return err
+}
+
+func (p *Span) writeField13(oprot thrift.TProtocol) (err error) {
+	if p.IsSetParentOperatorNames() {
+		if err := oprot.WriteFieldBegin("ParentOperatorNames", thrift.LIST, 13); err != nil {
+			return thrift.PrependError(fmt.Sprintf("%T write field begin error 13:ParentOperatorNames: ", p), err)
+		}
+		if err := oprot.WriteListBegin(thrift.STRING, len(p.ParentOperatorNames)); err != nil {
+			return thrift.PrependError("error writing list begin: ", err)
+		}
+		for _, v := range p.ParentOperatorNames {
+			if err := oprot.WriteString(string(v)); err != nil {
+				return thrift.PrependError(fmt.Sprintf("%T. (0) field write error: ", p), err)
+			}
+		}
+		if err := oprot.WriteListEnd(); err != nil {
+			return thrift.PrependError("error writing list end: ", err)
+		}
+		if err := oprot.WriteFieldEnd(); err != nil {
+			return thrift.PrependError(fmt.Sprintf("%T write field end error 13:ParentOperatorNames: ", p), err)
+		}
+	}
+	return err
+}
+
 func (p *Span) String() string {
 	if p == nil {
 		return "<nil>"
@@ -1502,11 +1630,11 @@ func (p *Process) readField2(iprot thrift.TProtocol) error {
 	tSlice := make([]*Tag, 0, size)
 	p.Tags = tSlice
 	for i := 0; i < size; i++ {
-		_elem4 := &Tag{}
-		if err := _elem4.Read(iprot); err != nil {
-			return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", _elem4), err)
+		_elem6 := &Tag{}
+		if err := _elem6.Read(iprot); err != nil {
+			return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", _elem6), err)
 		}
-		p.Tags = append(p.Tags, _elem4)
+		p.Tags = append(p.Tags, _elem6)
 	}
 	if err := iprot.ReadListEnd(); err != nil {
 		return thrift.PrependError("error reading list end: ", err)
@@ -1668,11 +1796,11 @@ func (p *Batch) readField2(iprot thrift.TProtocol) error {
 	tSlice := make([]*Span, 0, size)
 	p.Spans = tSlice
 	for i := 0; i < size; i++ {
-		_elem5 := &Span{}
-		if err := _elem5.Read(iprot); err != nil {
-			return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", _elem5), err)
+		_elem7 := &Span{}
+		if err := _elem7.Read(iprot); err != nil {
+			return thrift.PrependError(fmt.Sprintf("%T error reading struct: ", _elem7), err)
 		}
-		p.Spans = append(p.Spans, _elem5)
+		p.Spans = append(p.Spans, _elem7)
 	}
 	if err := iprot.ReadListEnd(); err != nil {
 		return thrift.PrependError("error reading list end: ", err)
