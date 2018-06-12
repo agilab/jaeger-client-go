@@ -6,6 +6,7 @@ package jaeger
 import (
 	"bytes"
 	"fmt"
+
 	"github.com/apache/thrift/lib/go/thrift"
 )
 
@@ -878,6 +879,7 @@ type Span struct {
 	Duration      int64      `thrift:"duration,9,required" json:"duration"`
 	Tags          []*Tag     `thrift:"tags,10" json:"tags,omitempty"`
 	Logs          []*Log     `thrift:"logs,11" json:"logs,omitempty"`
+	ParentIds     []int64    `thrift:"parentIds,11" json:"parentIds,omitempty"`
 }
 
 func NewSpan() *Span {

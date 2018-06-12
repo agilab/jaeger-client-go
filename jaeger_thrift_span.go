@@ -41,6 +41,7 @@ func BuildJaegerThrift(span *Span) *j.Span {
 		Tags:          buildTags(span.tags),
 		Logs:          buildLogs(span.logs),
 		References:    buildReferences(span.references),
+		ParentIds:     span.context.parentIDs,
 	}
 	return jaegerSpan
 }

@@ -242,6 +242,7 @@ func (t *Tracer) startSpanWithOptions(
 			ctx.flags |= flagSampled
 			samplerTags = tags
 		}
+		ctx.parentIDs = []int64{int64(ctx.spanID)}
 	} else {
 		ctx.traceID = parent.traceID
 		if rpcServer && t.options.zipkinSharedRPCSpan {
@@ -252,6 +253,7 @@ func (t *Tracer) startSpanWithOptions(
 			ctx.spanID = SpanID(t.randomID())
 			ctx.parentID = parent.spanID
 		}
+		ctx.parentIDs = append([]int64{int64(ctx.spanID)}, parent.parentIDs...)
 		ctx.flags = parent.flags
 	}
 	if hasParent {

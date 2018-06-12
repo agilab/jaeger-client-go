@@ -66,6 +66,9 @@ type SpanContext struct {
 	//
 	// See JaegerDebugHeader in constants.go
 	debugID string
+
+	// parent IDs
+	parentIDs []int64
 }
 
 // ForeachBaggageItem implements ForeachBaggageItem() of opentracing.SpanContext
@@ -187,7 +190,7 @@ func (c SpanContext) WithBaggageItem(key, value string) SpanContext {
 		newBaggage[key] = value
 	}
 	// Use positional parameters so the compiler will help catch new fields.
-	return SpanContext{c.traceID, c.spanID, c.parentID, c.flags, newBaggage, ""}
+	return SpanContext{c.traceID, c.spanID, c.parentID, c.flags, newBaggage, "", c.parentIDs}
 }
 
 // isDebugIDContainerOnly returns true when the instance of the context is only
